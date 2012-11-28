@@ -8,6 +8,7 @@ import urllib
 import urllib2
 import gzip
 import sys
+import datetime
 from multiprocessing import Process, Pipe, Manager
 from lxml import etree
 import time
@@ -88,12 +89,8 @@ class TeSpeed:
         if store:
             print_debug("Printing CSV formated results to STDOUT.\n")
         self.numTop=int(numTop)
-        self.downList=['350x350', '500x500', '750x750', '1000x1000',
-            '1500x1500', '2000x2000', '2000x2000', '2500x2500', '3000x3000',
-            '3500x3500', '4000x4000', '4000x4000', '4000x4000', '4000x4000']
-        self.upSizes=[1024*256, 1024*256, 1024*512, 1024*512, 
-            1024*1024, 1024*1024, 1024*1024*2, 1024*1024*2, 
-            1024*1024*2, 1024*1024*2]
+        self.downList=['1000x1000']
+        self.upSizes=[1000*1000]
 
         self.postData=""
         self.TestSpeed()
@@ -485,7 +482,7 @@ class TeSpeed:
         self.TestDownload()
         self.TestUpload()
 
-        print_result("%0.2f,%0.2f,\"%s\",\"%s\"\n" % (self.down_speed, self.up_speed, self.units, self.server))
+        print_result("%s\t%0.2f,%0.2f,\"%s\",\"%s\"\n" % (datetime.datetime.now(), self.down_speed, self.up_speed, self.units, self.server))
 
     def ListServers(self, num=0):
         
@@ -516,6 +513,11 @@ def main(args):
         print_debug("Getting ready\n")
     try:
         t=TeSpeed(args.listservers and 'list-servers' or args.server, args.listservers, args.store and True or False, args.suppress and True or False, args.unit and True or False)
+        if args.sleep != None:
+            while True:
+                print_debug("Sleeping for %d seconds" % args.sleep)
+                time.sleep(args.sleep)
+                t.TestSpeed()
     except (KeyboardInterrupt, SystemExit):
         print_debug("\nTesting stopped.\n")
         #raise
@@ -528,6 +530,7 @@ if __name__ == '__main__':
     parser.add_argument('-w', '--csv', dest='store', action='store_const', const=True, help='Print CSV formated output to STDOUT.')
     parser.add_argument('-s', '--suppress', dest='suppress', action='store_const', const=True, help='Suppress debugging (STDERR) output.')
     parser.add_argument('-mib', '--mebibit', dest='unit', action='store_const', const=True, help='Show results in mebibits.')
+    parser.add_argument('-z', '--sleep', dest='sleep', type=int, default=None, help='Sleep for seconds and keep repeating')
 
     args = parser.parse_args()
     main(args)
